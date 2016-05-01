@@ -11,6 +11,7 @@ from os.path import expanduser
 import signal
 from collections import OrderedDict
 import re
+import subprocess
 
 # Fix enconding in older Python versions
 reload(sys)
@@ -21,8 +22,10 @@ from gi import require_version
 require_version('AppIndicator3', '0.1')
 require_version('Gtk', '3.0')
 require_version('Notify', '0.7')
+require_version('Keybinder', '3.0')
 from gi.repository import GLib, Gtk, GObject, Gdk, Notify, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
+from gi.repository import Keybinder
 
 # Where is the data?
 directories = [expanduser("~") + "/.local/share/emojione-picker", "/usr/local/share/emojione-picker", "/usr/share/emojione-picker", os.path.dirname(os.path.realpath(__file__))]
@@ -86,9 +89,12 @@ def save_settings():
 # Search feature
 searchbuilder = Gtk.Builder()
 def open_search_window(self, w):
+    global focwin
+    focwin = subprocess.check_output(['xdotool', 'getwindowfocus'])
     searchbuilder.add_from_file(directory + "/assets/chooser.glade")
     searchbuilder.connect_signals(SearchHandler())
     search_window = searchbuilder.get_object("search_window")
+    search_window.set_keep_above(True)
     search_window.show_all()
     search_window.present()
     search_window.grab_focus()
@@ -132,6 +138,9 @@ class SearchHandler:
             for keyword in sorted_data[i]["keywords"]:
                 if keyword.find(search)>-1:
                     match = True
+            for keyword in sorted_data[i]["aliases_ascii"]:
+                if keyword.find(search)>-1:
+                    match = True
             if sorted_data[i]["name"].find(search)>-1:
                 match = True
             if match == True:
@@ -152,6 +161,12 @@ class SearchHandler:
             window.destroy()
         elif event.keyval == Gdk.KEY_Down:
             searchbuilder.get_object("iconview").grab_focus()
+        elif event.keyval == Gdk.KEY_Return:
+            item_response(self, searchresults[0])
+            window.destroy()
+            sleep(.1)
+            subprocess.call(['xdotool','windowfocus',focwin])
+            subprocess.call(['xdotool','key','--clearmodifiers','ctrl+v'])
     def onOutFocus(self, window, data):
         window.destroy()
 
@@ -484,6 +499,9 @@ if __name__ == "__main__":
 
     # Associate menu with indicator
     ind.set_menu(menu)
+
+    Keybinder.init()
+    Keybinder.bind('<Alt>E', open_search_window, '')
 
     # Gtk main - call after first update
     signal.signal(signal.SIGINT, signal.SIG_DFL)
