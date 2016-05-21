@@ -250,7 +250,7 @@ def item_response(self, w):
     for char in chars:
         output = output + '\\U' + (char.zfill(8))
     clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-    GLib.idle_add(clipboard.set_text,output.decode('unicode-escape'), -1)
+    clipboard.set_text(output.decode('unicode-escape'), -1)
 
     # Show notification
     if settings["notifications"]==True:
