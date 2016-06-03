@@ -84,6 +84,22 @@ def save_settings():
     with open(configfile, 'w') as outfile:
         json.dump(settings, outfile)
 
+# Put recent icons in iconstore
+def put_recent():
+    iconstore = searchbuilder.get_object("iconstore")
+    global sorted_recent, searchresults
+    for i in sorted_recent:
+        emoji_name = sorted_recent[i]["name"]
+        emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_recent[i]["unicode"] + ".svg", 24, 24)
+        emoji_code = sorted_recent[i]["unicode"]
+        iconstore.append([emoji_image, emoji_code, emoji_name])
+    searchresults = []
+    for i in sorted_recent.keys():
+        searchresults.append(sorted_recent[i])
+    path = Gtk.TreePath(0)
+    searchbuilder.get_object("iconview").set_cursor(path,None,False)
+    searchbuilder.get_object("iconview").select_path(path)
+
 # Search feature
 searchbuilder = Gtk.Builder()
 def open_search_window(self, w):
@@ -98,17 +114,7 @@ def open_search_window(self, w):
     search_window.grab_focus()
 
     # Put recent icons by default
-    iconstore = searchbuilder.get_object("iconstore")
-    global sorted_recent, searchresults
-    for i in sorted_recent:
-        emoji_name = sorted_recent[i]["name"]
-        emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_recent[i]["unicode"] + ".svg", 24, 24)
-        emoji_code = sorted_recent[i]["unicode"]
-        iconstore.append([emoji_image, emoji_code, emoji_name])
-    searchresults = []
-    for i in sorted_recent.keys():
-        searchresults.append(sorted_recent[i])
-    return
+    put_recent()
 
 searchresults = None
 class SearchHandler:
@@ -119,37 +125,29 @@ class SearchHandler:
         iconstore.clear()
         if search == "":
             # No search? Put recent icons
-            global sorted_recent
-            for i in sorted_recent:
-                emoji_name = sorted_recent[i]["name"]
-                emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_recent[i]["unicode"] + ".svg", 24, 24)
-                emoji_code = sorted_recent[i]["unicode"]
-                iconstore.append([emoji_image, emoji_code, emoji_name])
+            put_recent()
+        else:
+            numfound=0
             searchresults = []
-            for i in sorted_recent.keys():
-                searchresults.append(sorted_recent[i])
-            return
-        numfound=0
-        searchresults = []
-        for i in sorted_data:
-            match = False
-            for keyword in sorted_data[i]["keywords"]:
-                if keyword.find(search)>-1:
+            for i in sorted_data:
+                match = False
+                for keyword in sorted_data[i]["keywords"]:
+                    if keyword.find(search)>-1:
+                        match = True
+                for keyword in sorted_data[i]["aliases_ascii"]:
+                    if keyword.find(search)>-1:
+                        match = True
+                if sorted_data[i]["name"].find(search)>-1:
                     match = True
-            for keyword in sorted_data[i]["aliases_ascii"]:
-                if keyword.find(search)>-1:
-                    match = True
-            if sorted_data[i]["name"].find(search)>-1:
-                match = True
-            if match == True:
-                numfound += 1
-                if numfound > 50:
-                    return
-                searchresults.append(sorted_data[i])
-                emoji_name = sorted_data[i]["name"]
-                emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_data[i]["unicode"] + ".svg", 24, 24)
-                emoji_code = sorted_data[i]["unicode"]
-                iconstore.append([emoji_image, emoji_code, emoji_name])
+                if match == True:
+                    numfound += 1
+                    if numfound > 50:
+                        return
+                    searchresults.append(sorted_data[i])
+                    emoji_name = sorted_data[i]["name"]
+                    emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_data[i]["unicode"] + ".svg", 24, 24)
+                    emoji_code = sorted_data[i]["unicode"]
+                    iconstore.append([emoji_image, emoji_code, emoji_name])
     def onIconActivated(self, icon, index):
         global searchresults
         item_response(self, searchresults[int(index.to_string())])
