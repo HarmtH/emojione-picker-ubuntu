@@ -20,10 +20,12 @@ from gi import require_version
 require_version('AppIndicator3', '0.1')
 require_version('Gtk', '3.0')
 require_version('Notify', '0.7')
-require_version('Keybinder', '3.0')
 from gi.repository import GLib, Gtk, GObject, Gdk, Notify, GdkPixbuf
 from gi.repository import AppIndicator3 as appindicator
-from gi.repository import Keybinder
+
+def handle_signal(a='',b=''):
+    open_search_window('','')
+    GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGUSR1, handle_signal)
 
 # Where is the data?
 directories = [os.path.dirname(os.path.realpath(__file__)), expanduser("~") + "/.local/share/emojione-picker", "/usr/local/share/emojione-picker", "/usr/share/emojione-picker"]
@@ -509,10 +511,7 @@ if __name__ == "__main__":
     # Associate menu with indicator
     ind.set_menu(menu)
 
-    # Add keybinding to search window
-    Keybinder.init()
-    Keybinder.bind('<Alt>E', open_search_window, '')
-
     # Gtk main - call after first update
+    GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGUSR1, handle_signal)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     Gtk.main()
