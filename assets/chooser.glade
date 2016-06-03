@@ -24,6 +24,7 @@
     <property name="has_resize_grip">False</property>
     <signal name="focus-out-event" handler="onOutFocus" swapped="no"/>
     <signal name="key-release-event" handler="onKeyReleased" swapped="no"/>
+    <signal name="key-press-event" handler="onKeyPressed" swapped="no"/>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>

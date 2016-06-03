@@ -142,23 +142,35 @@ class SearchHandler:
                 if match == True:
                     numfound += 1
                     if numfound > 50:
-                        return
+                        break
                     searchresults.append(sorted_data[i])
                     emoji_name = sorted_data[i]["name"]
                     emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_data[i]["unicode"] + ".svg", 24, 24)
                     emoji_code = sorted_data[i]["unicode"]
                     iconstore.append([emoji_image, emoji_code, emoji_name])
+            path = Gtk.TreePath(0)
+            searchbuilder.get_object("iconview").set_cursor(path,None,True)
+            searchbuilder.get_object("iconview").select_path(path)
     def onIconActivated(self, icon, index):
         global searchresults
         item_response(self, searchresults[int(index.to_string())])
         icon.get_parent_window().destroy()
         subprocess.call(['xdotool','windowfocus',focwin])
         subprocess.call(['xdotool','key','--clearmodifiers','ctrl+v'])
+    def onKeyPressed(self, window, event):
+        if event.keyval == Gdk.KEY_Left and searchbuilder.get_object("search").get_text()=="" and window.get_focus() == searchbuilder.get_object("search"):
+            searchbuilder.get_object("iconview").grab_focus()
+        elif event.keyval == Gdk.KEY_Right and searchbuilder.get_object("search").get_text()=="" and window.get_focus() == searchbuilder.get_object("search"):
+            searchbuilder.get_object("iconview").grab_focus()
+        elif event.keyval == Gdk.KEY_Down and searchbuilder.get_object("search").get_text()=="" and window.get_focus() == searchbuilder.get_object("search"):
+            searchbuilder.get_object("iconview").grab_focus()
+        elif event.keyval == Gdk.KEY_Up and window.get_focus() == searchbuilder.get_object("iconview"):
+            cur_index = searchbuilder.get_object("iconview").get_cursor()[1].get_indices()[0]
+            if cur_index <= 8:
+                searchbuilder.get_object("search").grab_focus()
     def onKeyReleased(self, window, event):
         if event.keyval == Gdk.KEY_Escape:
             window.destroy()
-        elif event.keyval == Gdk.KEY_Down:
-            searchbuilder.get_object("iconview").grab_focus()
         elif event.keyval == Gdk.KEY_Return:
             item_response(self, searchresults[0])
             window.destroy()
@@ -504,4 +516,3 @@ if __name__ == "__main__":
     # Gtk main - call after first update
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     Gtk.main()
-
