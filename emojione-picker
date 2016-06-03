@@ -26,7 +26,7 @@ from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Keybinder
 
 # Where is the data?
-directories = [expanduser("~") + "/.local/share/emojione-picker", "/usr/local/share/emojione-picker", "/usr/share/emojione-picker", os.path.dirname(os.path.realpath(__file__))]
+directories = [os.path.dirname(os.path.realpath(__file__)), expanduser("~") + "/.local/share/emojione-picker", "/usr/local/share/emojione-picker", "/usr/share/emojione-picker"]
 for d in directories:
     if os.path.isdir(d):
         directory = d;
