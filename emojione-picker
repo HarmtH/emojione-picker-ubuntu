@@ -138,11 +138,35 @@ def open_search_window(self, w):
         for i in sorted_recent.keys():
             searchresults.append(sorted_recent[i])
 
-    return
+        path = Gtk.TreePath(0)
+        searchbuilder.get_object("iconview").set_cursor(path, None, False)
+        searchbuilder.get_object("iconview").select_path(path)
+
 
 searchresults = None
-selectionChanged = False
 class SearchHandler:
+    @staticmethod
+    def isSearchEmpty():
+        return searchbuilder.get_object("search").get_text() == ""
+
+    @staticmethod
+    def isSearchFocused(window):
+        return window.get_focus() == searchbuilder.get_object("search")
+
+    @staticmethod
+    def getCurItemIndex():
+        return searchbuilder.get_object("iconview").get_cursor()[1].get_indices()[0]
+
+    @staticmethod
+    def selectIconRelative(inc):
+        new_index = SearchHandler.getCurItemIndex() + inc
+        if new_index < 0:
+            return
+        new_path = Gtk.TreePath(new_index)
+        iconview = searchbuilder.get_object("iconview")
+        iconview.select_path(new_path)
+        iconview.set_cursor(new_path, None, False)
+
     def onSearchChanged(self, search):
         global searchresults
         search = searchbuilder.get_object("search").get_text()
@@ -159,7 +183,6 @@ class SearchHandler:
             searchresults = []
             for i in sorted_recent.keys():
                 searchresults.append(sorted_recent[i])
-            return
         numfound=0
         searchresults = []
         for i in sorted_data:
@@ -172,28 +195,59 @@ class SearchHandler:
             if match == True:
                 numfound += 1
                 if numfound > 50:
-                    return
+                    break
                 searchresults.append(sorted_data[i])
                 emoji_name = sorted_data[i]["name"]
                 emoji_image = GdkPixbuf.Pixbuf.new_from_file_at_size(directory + "/assets/svg/" + sorted_data[i]["unicode"] + ".svg", 24, 24)
                 emoji_code = sorted_data[i]["unicode"]
                 iconstore.append([emoji_image, emoji_code, emoji_name])
+        path = Gtk.TreePath(0)
+        searchbuilder.get_object("iconview").select_path(path)
+        searchbuilder.get_object("iconview").set_cursor(path, None, False)
     def onIconActivated(self, icon, index):
         global searchresults
         item_response(self, searchresults[int(index.to_string())])
         icon.get_parent_window().hide()
-    def onSelectionChanged(self, data):
-        global selectionChanged
-        selectionChanged = True
-    def onKeyReleased(self, window, event):
-        global selectionChanged
-        if event.keyval == Gdk.KEY_Escape:
-            window.hide()
-        elif event.keyval == Gdk.KEY_Down:
-            searchbuilder.get_object("iconview").grab_focus()
-        elif event.keyval == Gdk.KEY_Up and selectionChanged == False:
-            searchbuilder.get_object("search").grab_focus()
-        selectionChanged = False
+    def onKeyPressed(self, window, event):
+        if self.isSearchFocused(window):
+            if event.keyval == Gdk.KEY_Escape:
+                window.hide()
+            if event.keyval == Gdk.KEY_Left and self.isSearchEmpty():
+                searchbuilder.get_object("iconview").grab_focus()
+                self.selectIconRelative(-1)
+            elif event.keyval == Gdk.KEY_Right and self.isSearchEmpty():
+                searchbuilder.get_object("iconview").grab_focus()
+                self.selectIconRelative(1)
+            elif event.keyval == Gdk.KEY_Up and self.isSearchEmpty():
+                searchbuilder.get_object("iconview").grab_focus()
+                self.selectIconRelative(-8)
+            elif event.keyval == Gdk.KEY_Down and self.isSearchEmpty():
+                searchbuilder.get_object("iconview").grab_focus()
+                self.selectIconRelative(8)
+            elif event.keyval == Gdk.KEY_Return:
+                item_response(self, searchresults[0])
+                window.hide()
+            else:
+                return False
+        else:  # iconView is focused
+            if event.keyval == Gdk.KEY_Escape:
+                window.hide()
+            if event.keyval == Gdk.KEY_Up or event.keyval == Gdk.KEY_k:
+                if self.getCurItemIndex() < 8:
+                    searchbuilder.get_object("search").grab_focus()
+                else:
+                    self.selectIconRelative(-8)
+            elif event.keyval == Gdk.KEY_BackSpace:
+                searchbuilder.get_object("search").grab_focus()
+            elif event.keyval == Gdk.KEY_h:
+                self.selectIconRelative(-1)
+            elif event.keyval == Gdk.KEY_j:
+                self.selectIconRelative(8)
+            elif event.keyval == Gdk.KEY_l:
+                self.selectIconRelative(1)
+            else:
+                return False
+        return True
     def onOutFocus(self, window, data):
         window.hide()
 

@@ -22,7 +22,7 @@
     <property name="urgency_hint">True</property>
     <property name="decorated">False</property>
     <signal name="focus-out-event" handler="onOutFocus" swapped="no"/>
-    <signal name="key-release-event" handler="onKeyReleased" swapped="no"/>
+    <signal name="key-press-event" handler="onKeyPressed" swapped="no"/>
     <child>
       <object class="GtkBox" id="box1">
         <property name="visible">True</property>
@@ -58,7 +58,6 @@
             <property name="item_padding">3</property>
             <property name="activate_on_single_click">True</property>
             <signal name="item-activated" handler="onIconActivated" swapped="no"/>
-            <signal name="selection-changed" handler="onSelectionChanged" swapped="no"/>
             <child>
               <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
               <attributes>
