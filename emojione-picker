@@ -112,6 +112,8 @@ def open_search_window(self, w):
     global searchbuilder
     global search_window
     # Build window only once
+    global focwin
+    focwin = subprocess.check_output(['xdotool', 'getwindowfocus'])
     try:
         search_window.show_all()
         search_window.present()
@@ -208,6 +210,8 @@ class SearchHandler:
         global searchresults
         item_response(self, searchresults[int(index.to_string())])
         icon.get_parent_window().hide()
+        subprocess.call(['xdotool', 'windowfocus', focwin])
+        subprocess.call(['xdotool', 'key', '--clearmodifiers', 'ctrl+v'])
     def onKeyPressed(self, window, event):
         if self.isSearchFocused(window):
             if event.keyval == Gdk.KEY_Escape:
@@ -227,6 +231,8 @@ class SearchHandler:
             elif event.keyval == Gdk.KEY_Return:
                 item_response(self, searchresults[0])
                 window.hide()
+                subprocess.call(['xdotool', 'windowfocus', focwin])
+                subprocess.call(['xdotool', 'key', '--clearmodifiers', 'ctrl+v'])
             else:
                 return False
         else:  # iconView is focused
